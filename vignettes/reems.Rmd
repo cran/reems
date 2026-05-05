@@ -1,0 +1,426 @@
+---
+title: "reems"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{reems}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+```{r setup}
+library(reems)
+```
+This vignette will walk you through the procedure of estimating effective migration surfaces from single-nucleotide polymorphism data (SNPs). It is designed to fit within the spatial population genetics ecosystem and to be compatible in its input format with other `R` packages such as [`conStruct`](https://CRAN.R-project.org/package=conStruct).
+
+The best introduction to the EEMS method itself is the original article by Petkova *et al.* <doi:10.1038/ng.3464>, a preprint of which is also available on bioRxiv (`https://www.biorxiv.org/content/10.1101/011809v2.full`). 
+Both the preprint version of the original article and the documentation of the original command-line utility are also available on [their GitHub repository](https://github.com/dipetkov/eems/tree/master/Documentation) and contain  many high-resolution examples of what the EEMS outplot plots look like. 
+
+At the beginning of this process, we assume you have an *allele frequency matrix* `freqs` and a *coordinate matrix* `coords` in your workspace. This package includes example objects `ex.freqs` and `ex.coords`. 
+
+# Estimating Effective Migration Surfaces 
+
+## Standard usage
+
+The simplest way to run an EEMS analysis is by using the `eems()` function of this package.
+It can be invoked with only minimal arguments: 
+```{r}
+eems(
+  freqs = freqs,
+  coords = coords,
+  mcmcpath = "/full/path/to/directory/prefix"
+)	
+```
+This runs an EEMS analysis for a set of diploid individuals on a single MCMC chain for 2000000 iterations, and with a default area outline derived from the coordinates themselves by adding a buffer around them. 
+It also assumes a default number of demes 6 times the number of individuals. 
+The results will be stored in an output directory `full/path/to/file/prefix-chain1`.
+The return value of the function is the output directory, so it is easy to retrieve.  
+
+Those defaults are designed to ensure an adequate resolution of the analysis, but they may not be suitable for your exact application context. In that case, you can set those parameters manually by specifying additional arguments. 
+The most useful ones are illustrated below, where the MCMC chain has been shortened by an order of magnitude for a more exploratory analysis on haploid samples. It also shows that the seed can be set manually to ensure reproducibility. 
+```{r}
+eems(
+  seed = 1024,	
+  freqs = freqs,
+  coords = coords,
+  mcmcpath = "/full/path/to/directory/prefix",
+  diploid = FALSE,
+  numMCMCIter = 100000,
+  numBurnIter = 50000,
+  numThinIter = 999
+)	
+```
+Usually, it is advisable to run more than one MCMC chain and combine the results. 
+`eems()` allows you to do so either sequentially or in parallel. 
+This example will run 5 chains in parallel with default settings, although it will not use more workers than there are cores available. Note that when run in parallel, the chains will run silently and console output is redirected to a log file which you can find among the other output files in the output directory.  
+```{r}
+eems(
+  freqs = freqs,
+  coords = coords,
+  mcmcpath = "full/path/to/directory/prefix",
+  nChains = 5,
+  parallel = TRUE
+)	
+```
+The output will then be in 5 separate directories, called `/full/path/to/directory/prefix-chain1` to `full/path/to/directory/prefix-chain5`. 
+
+## Specifying a more complex habitat
+
+Sometimes, one wants to use a more complex habitat which cannot be described as everything within a single outline.
+In those cases, we can use the function `grid.make()` to create a grid that has both boundary points and holes.
+This grid can then be passed to `eems()` using the optional parameters `demes` and `edges`.
+The following code loads an example outline and places two holes inside it before running an EEMS analysis with the input.     
+
+```{r}
+data_path <- system.file("extdata", package = "reems")
+input <- file.path(data_path, "barrier-schemeX-nIndiv300-nSites3000")
+
+outer <- read.table(paste0(input, ".outer"))
+
+hole1 <- data.frame(V1 = c(2., 5., 5., 2., 2.), V2 = c(2., 2., 5., 5., 2.))
+hole2 <- data.frame(V1 = c(6.5, 10., 8., 6.5), V2 = c(2.5, 5., 5., 2.5))
+
+# Create the new grid  with holes
+grid <- grid.make(outer = outer, holes = list(hole1, hole2), nDemes = 300)
+
+eems(
+  freqs = freqs,
+  coords = coords,
+  mcmcpath = "full/path/to/directory/prefix",
+  demes = grid$demes,
+  edges = grid$edges,
+  nChains = 5,
+  parallel = TRUE
+)	
+
+```
+
+## Hyperparameters
+
+Various additional parameters can be set with additional arguments to `eems()`, documentation of which can be found in the function documentation  for `eems()`. This includes the various hyperparameters available for tuning. 
+
+```{r}
+?eems
+```
+Regarding those, in the documentation of the `EEMS` command-line utility, available at  <https://github.com/dipetkov/eems/blob/master/Documentation/EEMS-doc.pdf>, Petkova writes the following:
+
+-----
+
+Choosing values for the proposal variances is something of a dark art– the goal is to
+choose the parameters so that proposals are accepted about 20% 30% of the time. In practice, it seems to be
+sufficient to choose the variances so that proposals are not accepted too rarely (less than 10% of the time) or
+too often (more than 40% of the time).
+
+Suppose that we run EEMS (say, with the default values for all proposal distributions) and at the end EEMS
+reports the following information about the frequency of accepting proposals of different types.
+
+```
+1 (2050/2593) = 79.06% for type "qTileRate"
+## change the rate of one tile in the diversity tessellation
+2 (1414/2478) = 57.06% for type "qTileMove"
+## move the seed of one tile in the diversity tessellation
+3 (1047/2494) = 41.98% for type "qBirthDeath"
+## add/remove one tile in the diversity tessellation
+4 (20625/47530) = 43.39% for type "mTileRate"
+## change the rate of one tile in the migration tessellation
+5 (15486/50098) = 30.91% for type "mMeanRate"
+## change the overall log10 migration rate
+6 (22352/47532) = 47.03% for type "mTileMove"
+## move the seed of one tile in the migration tessellation
+7 (26305/47275) = 55.64% for type "mBirthDeath"
+## add/remove one tile in the migration tessellation
+```
+It seems that `qTileRate` and `qTileMove` are accepted too often. So it might be a good idea to increase
+`qEffctProposalS2` and `qSeedsProposalS2`. [If the proposal variance is higher, then bigger changes/moves will
+be proposed and hence the updates will be accepted less often.]
+
+Finally, the parameter `qVoronoiPr` specifies how often to propose updating the diversity Voronoi tessellation.
+Its default value is `0.05`, which means that about `5%` of the time the proposals are about the diversity tessellation
+and about `95%` of the time the proposals are about the migration tessellation.
+
+-----
+
+# Plotting the output of an EEMS analysis
+
+The output of the EEMS analysis performed with `eems()` can be plotted using `eems.plots()`, which produces several figures:
+
+* `mrates01` is the effective migration surface. 
+This contour plot visualizes the estimated effective migration rates $m$, on the log10 scale after mean centering.
+
+* `mrates02` shows  posterior probabilities $P(m > 0 | \texttt{diffs})$ and $P(m < 0 | \texttt{diffs})$ for each location in the habitat. 
+Since migration rates are visualized on the log10 scale after mean centering, 0 corresponds to the overall mean migration rate. 
+This contour plot emphasizes regions with effective migration that is significantly higher/lower than the overall average.
+
+* `qrates01` plots the effective diversity surface. This contour plot visualizes the estimated effective diversity rates $q$, on the log10 scale after mean centering.
+* `qrates02` shows the posterior probabilities $P(q > 0 | \texttt{diffs})$ and $P(q < 0 | \texttt{diffs})$. Similar to `mrates02` but applied to the effective diversity rates.
+* `rdist01` is a scatter plot of the observed vs the fitted between-deme component of genetic dissimilarity, where one point represents a pair of sampled demes.
+* `rdist02` is a scatter plot of the observed vs the fitted between-deme component of genetic dissimilarity, where one point represents a sampled deme.
+* `rdist03` is a scatter plot of observed genetic dissimilarities between demes vs observed geographic distances between demes.
+* `pilogl01` is the posterior probability trace plot. 
+
+The `mrates` and `qrates` figures visualize (properties of) the effective migration
+and diversity rates across the habitat. The other figures can help to check that the MCMC
+sampler has converged (the trace plot `pilogl`) and that the EEMS model fits the data
+well (the scatter plots of genetic dissimilarities `rdist`).
+
+The function `eems.plots()` will work given the results from a single EEMS run (one
+directory in `mcmcpath`) but it is better to run EEMS several times, randomly initializing
+the MCMC chain each time.
+
+Hence, `eems.plots()` takes as input a vector of EEMS output directories. 
+If the chains have been obtained from a single call of `eems()` with `nChains` greater than 1, or if only a single run is to be plotted, 
+one can use the return value of `eems()`, which is precisely this vector of output directories. 
+The other required arguments for `eems.plots()` are `plotpath`, which is the full path to a file prefix that will then be completed by the names of the plots given above, and `longlat`, a logical value that is set `TRUE` if the X coordinate is the longitude and the Y coordinate the latitude, and `FALSE` otherwise. 
+```{r}
+eems_results <- eems(
+  freqs = freqs,
+  coords = coords,
+  mcmcpath = "/full/path/to/directory/prefix",
+  nChains = 5,
+  parallel = TRUE
+)	
+
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/prefix",
+  longlat = TRUE
+)
+```
+
+Various optional parameters add additional plotting functionality, which we will illustrate with a series of examples. 
+
+We can add the original sampling locations on top of the contour plot.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/with-sampling",
+  longlat = TRUE,
+  m.plot.xy = {
+    points(coord, col = "purple")
+  },
+  q.plot.xy = {
+    points(coord, col = "purple")
+  }
+)
+```
+
+We can flip the x and y axis, i.e., assume that the x coordinate is the latitude and the y coordinate is the longitude.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath =  "/full/path/to/file/axes-flipped",
+  longlat = FALSE
+)
+```
+
+We can also control the output size and format.
+The code below generates all figures as PDF, with the `mrates` and `qrates` plots of height 12 inches and width 10 inches.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath =  "/full/path/to/file/output-PDFs",
+  longlat = TRUE,
+  plot.height = 12,
+  plot.width = 10
+)
+```
+
+The following code will generate all figures as PNG, with the `mrates` and `qrates` plots of height  9 inches, width 8 inches and resolution 600 dots per inch.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath =  "/full/path/to/file/output-PNGs",
+  longlat = TRUE,
+  plot.height = 9,
+  plot.width = 8,
+  res = 600,
+  out.png = TRUE
+)
+```
+
+We can set various colors and shapes for the outline, the grid and the demes.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath =  "/full/path/to/file/demes-and-edges",
+  longlat = TRUE,
+  add.grid = TRUE,
+  col.grid = "gray90",
+  lwd.grid = 2,
+  add.outline = TRUE,
+  col.outline = "blue",
+  lwd.outline = 5,
+  add.demes = TRUE,
+  col.demes = "red",
+  pch.demes = 5,
+  min.cex.demes = 0.5,
+  max.cex.demes = 1.5
+)
+```
+
+If we have the `RColorBrewer` package, we can also use a divergent Red to Blue color scheme instead of the default DarkOrange to Blue color scheme.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/new-eems-colors",
+  longlat = TRUE,
+  eems.colors = RColorBrewer::Rbrewer.pal(11, "RdBu")
+)
+```
+In a similar vein, we can specify the color scales for the migration and diversity rates.
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/fix-colscales",
+  longlat = TRUE,
+  add.outline = TRUE,
+  col.outline = "gray",
+  m.colscale = c(-3, 3),
+  q.colscale = c(-0.3, +0.3)
+)
+```
+
+Often, especially when dealing with larger spatial scales, it is helpful to produce contour plots that follow a certain cartographic projection, in this case the Mercator projection.
+```{r}
+projection_none <- "+proj=longlat +datum=WGS84"
+projection_mercator <- "+proj=merc +datum=WGS84"
+
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/cartographic-projections",
+  longlat = TRUE,
+  projection.in = projection_none,
+  projection.out = projection_mercator
+)
+```
+Using the additional packages `rworldmap` and `rworldxtra`, we can even add a high-resolution geographic map as a backdrop to our plots. Setting the corresponding option `add.map = TRUE` requires both those packages, and also requires that `projection.in` is specificed. 
+```{r}
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/geographic-map",
+  longlat = TRUE,
+  projection.in = projection_none,
+  projection.out = projection_mercator,
+  add.map = TRUE,
+  col.map = "black",
+  lwd.map = 5
+)
+```
+We can explicitly add a specific map by passing the shape file.
+```{r}
+map_world <- rworldmap::getMap()
+map_africa <- map_world[which(map_world@data$continent == "Africa"), ]
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/shapefile",
+  longlat = TRUE,
+  m.plot.xy = {
+    plot(map_africa, col = NA, add = TRUE)
+  },
+  q.plot.xy = {
+    plot(map_africa, col = NA, add = TRUE)
+  }
+)
+```
+Combining both, we can apply the Mercator projection and add the map of Africa. 
+We must be careful to apply the same projection to the map as well.
+```{r}
+map_africa <- sp::spTransform(map_africa,  sp::CRS(projection_mercator))
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath =  "/full/path/to/file/shapefile-projected",
+  longlat = TRUE,
+  projection.in = projection_none,
+  projection.out = projection_mercator,
+  m.plot.xy = {
+    plot(map_africa, col = NA, add = TRUE)
+  },
+  q.plot.xy = {
+    plot(map_africa, col = NA, add = TRUE)
+  }
+)
+```
+Similarly, we can add points, lines, labels, etc. 
+Here is how to add a set of colored "labels" on top of the migration/diversity rates and the Africa map. 
+Note that we also need to project any points we want to plot. 
+```{r}
+coords <- matrix(c(
+  -10, 10,
+  10, 10,
+  30, 0,
+  40, -10,
+  30, -20
+), ncol = 2, byrow = TRUE)
+colors <- c("red", "green", "blue", "purple", "orange")
+labels <- LETTERS[1:5]
+coords_merc <- sp::spTransform(
+  sp::SpatialPoints(coords, sp::CRS(projection_none)),
+  sp::CRS(projection_mercator)
+)
+
+coords_merc <- coords_merc@coords
+
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/labels-projected",
+  longlat = TRUE,
+  projection.in = projection_none,
+  projection.out = projection_mercator,
+  m.plot.xy = {
+    text(coords_merc, col = colors, pch = labels, font = 2)
+  },
+  q.plot.xy = {
+    text(coords_merc, col = colors, pch = labels, font = 2)
+  }
+)
+```
+
+Lastly, we can also use `eems.plots` to compute the migration and diversity rates at specific points. 
+They will then be saved in an RData file together with the figures. 
+```{r}
+xy.coords <- matrix(c(
+  13.70, 3.20,
+  37.10, -7.20,
+  36.10, -4.10,
+  34.58, -5.67
+), ncol = 2, byrow = TRUE)
+eems.plots(
+  mcmcpath = eems_results,
+  plotpath = "/full/path/to/file/default",
+  longlat = TRUE,
+  xy.coords = xy.coords
+)
+load(paste0("/full/path/to/file/default", "-rdist.RData"))
+```
+The RData file contains `xym.values` and `xyq.values`.
+`xym.values` store the migration rate for each coordinate, on the log10 scale and after mean-centering.
+Similarly, `xyq.values` stores the diversity rate for each coordinate, on the log10 scale and after mean-centering.
+
+An overview of all the parameters to `eems.plots()` can be found in its function documentation.
+```{r}
+?eems.plots
+```
+
+# Other functions
+Besides the two main user-facing functions `eems()` and `eems.plots()`, which should suffice for the more common use cases,  this package also provides some additional functions, which we will just describe very briefly here. 
+More information  about them can be found in their respective function documentation. 
+
+* `eems.from.files()` runs an EEMS analysis from input data available as tabular files on disk, and corresponds precisely to the original EEMS utility available at <https://github.com/dipetkov/eems>. 
+
+* `eems.population.grid()` plots the population grid, with all edges in the same color, to visualize the grid before estimating migration and diversity rates. 
+This is sometimes useful for troubleshooting issues with grid connectivity. 
+    
+* `eems.voronoi.samples()` and `eems.posterior.draws()` both take random samples from the posterior distribution of the migration and diversity rates and plot them to visualize the posterior variance (in a slightly different way).
+
+* `grid.make()` constructs a regular triangular grid with circa nDemes vertices within a habitat outline. 
+It can also be used to make a more complex habitat with holes. 
+
+* `outer.buffered()` computes the boundary polygon of a habitat encompassing a set of points, while keeping a specific buffer distance from the supplied points. 
+This is used internally by `eems()` to create a default habitat, but can also be used directly to make the outer boundary of a more complex habitat. 

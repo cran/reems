@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>reems</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">reems</h1>
+
+
+
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">library</span>(reems)</span></code></pre></div>
+<p>This vignette will walk you through the procedure of estimating
+effective migration surfaces from single-nucleotide polymorphism data
+(SNPs). It is designed to fit within the spatial population genetics
+ecosystem and to be compatible in its input format with other
+<code>R</code> packages such as <a href="https://CRAN.R-project.org/package=conStruct"><code>conStruct</code></a>.</p>
+<p>The best introduction to the EEMS method itself is the original
+article by Petkova <em>et al.</em> <a href="doi:10.1038/ng.3464" class="uri">doi:10.1038/ng.3464</a>, a preprint of which is also
+available on bioRxiv
+(<code>https://www.biorxiv.org/content/10.1101/011809v2.full</code>).
+Both the preprint version of the original article and the documentation
+of the original command-line utility are also available on <a href="https://github.com/dipetkov/eems/tree/master/Documentation">their
+GitHub repository</a> and contain many high-resolution examples of what
+the EEMS outplot plots look like.</p>
+<p>At the beginning of this process, we assume you have an <em>allele
+frequency matrix</em> <code>freqs</code> and a <em>coordinate
+matrix</em> <code>coords</code> in your workspace. This package includes
+example objects <code>ex.freqs</code> and <code>ex.coords</code>.</p>
+<div id="estimating-effective-migration-surfaces" class="section level1">
+<h1>Estimating Effective Migration Surfaces</h1>
+<div id="standard-usage" class="section level2">
+<h2>Standard usage</h2>
+<p>The simplest way to run an EEMS analysis is by using the
+<code>eems()</code> function of this package. It can be invoked with
+only minimal arguments:</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a><span class="fu">eems</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="at">freqs =</span> freqs,</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">coords =</span> coords,</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">mcmcpath =</span> <span class="st">&quot;/full/path/to/directory/prefix&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>)   </span></code></pre></div>
+<p>This runs an EEMS analysis for a set of diploid individuals on a
+single MCMC chain for 2000000 iterations, and with a default area
+outline derived from the coordinates themselves by adding a buffer
+around them. It also assumes a default number of demes 6 times the
+number of individuals. The results will be stored in an output directory
+<code>full/path/to/file/prefix-chain1</code>. The return value of the
+function is the output directory, so it is easy to retrieve.</p>
+<p>Those defaults are designed to ensure an adequate resolution of the
+analysis, but they may not be suitable for your exact application
+context. In that case, you can set those parameters manually by
+specifying additional arguments. The most useful ones are illustrated
+below, where the MCMC chain has been shortened by an order of magnitude
+for a more exploratory analysis on haploid samples. It also shows that
+the seed can be set manually to ensure reproducibility.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">eems</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">1024</span>,  </span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">freqs =</span> freqs,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">coords =</span> coords,</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>  <span class="at">mcmcpath =</span> <span class="st">&quot;/full/path/to/directory/prefix&quot;</span>,</span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a>  <span class="at">diploid =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>  <span class="at">numMCMCIter =</span> <span class="dv">100000</span>,</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a>  <span class="at">numBurnIter =</span> <span class="dv">50000</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a>  <span class="at">numThinIter =</span> <span class="dv">999</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>)   </span></code></pre></div>
+<p>Usually, it is advisable to run more than one MCMC chain and combine
+the results. <code>eems()</code> allows you to do so either sequentially
+or in parallel. This example will run 5 chains in parallel with default
+settings, although it will not use more workers than there are cores
+available. Note that when run in parallel, the chains will run silently
+and console output is redirected to a log file which you can find among
+the other output files in the output directory.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">eems</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="at">freqs =</span> freqs,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">coords =</span> coords,</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">mcmcpath =</span> <span class="st">&quot;full/path/to/directory/prefix&quot;</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">nChains =</span> <span class="dv">5</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">TRUE</span></span>
+<span id="cb4-7"><a href="#cb4-7" tabindex="-1"></a>)   </span></code></pre></div>
+<p>The output will then be in 5 separate directories, called
+<code>/full/path/to/directory/prefix-chain1</code> to
+<code>full/path/to/directory/prefix-chain5</code>.</p>
+</div>
+<div id="specifying-a-more-complex-habitat" class="section level2">
+<h2>Specifying a more complex habitat</h2>
+<p>Sometimes, one wants to use a more complex habitat which cannot be
+described as everything within a single outline. In those cases, we can
+use the function <code>grid.make()</code> to create a grid that has both
+boundary points and holes. This grid can then be passed to
+<code>eems()</code> using the optional parameters <code>demes</code> and
+<code>edges</code>. The following code loads an example outline and
+places two holes inside it before running an EEMS analysis with the
+input.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>data_path <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata&quot;</span>, <span class="at">package =</span> <span class="st">&quot;reems&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>input <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_path, <span class="st">&quot;barrier-schemeX-nIndiv300-nSites3000&quot;</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>outer <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="fu">paste0</span>(input, <span class="st">&quot;.outer&quot;</span>))</span>
+<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a>hole1 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">V1 =</span> <span class="fu">c</span>(<span class="fl">2.</span>, <span class="fl">5.</span>, <span class="fl">5.</span>, <span class="fl">2.</span>, <span class="fl">2.</span>), <span class="at">V2 =</span> <span class="fu">c</span>(<span class="fl">2.</span>, <span class="fl">2.</span>, <span class="fl">5.</span>, <span class="fl">5.</span>, <span class="fl">2.</span>))</span>
+<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a>hole2 <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">V1 =</span> <span class="fu">c</span>(<span class="fl">6.5</span>, <span class="fl">10.</span>, <span class="fl">8.</span>, <span class="fl">6.5</span>), <span class="at">V2 =</span> <span class="fu">c</span>(<span class="fl">2.5</span>, <span class="fl">5.</span>, <span class="fl">5.</span>, <span class="fl">2.5</span>))</span>
+<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="co"># Create the new grid  with holes</span></span>
+<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">grid.make</span>(<span class="at">outer =</span> outer, <span class="at">holes =</span> <span class="fu">list</span>(hole1, hole2), <span class="at">nDemes =</span> <span class="dv">300</span>)</span>
+<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="fu">eems</span>(</span>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a>  <span class="at">freqs =</span> freqs,</span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a>  <span class="at">coords =</span> coords,</span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a>  <span class="at">mcmcpath =</span> <span class="st">&quot;full/path/to/directory/prefix&quot;</span>,</span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a>  <span class="at">demes =</span> grid<span class="sc">$</span>demes,</span>
+<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a>  <span class="at">edges =</span> grid<span class="sc">$</span>edges,</span>
+<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a>  <span class="at">nChains =</span> <span class="dv">5</span>,</span>
+<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">TRUE</span></span>
+<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a>)   </span></code></pre></div>
+</div>
+<div id="hyperparameters" class="section level2">
+<h2>Hyperparameters</h2>
+<p>Various additional parameters can be set with additional arguments to
+<code>eems()</code>, documentation of which can be found in the function
+documentation for <code>eems()</code>. This includes the various
+hyperparameters available for tuning.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>?eems</span></code></pre></div>
+<p>Regarding those, in the documentation of the <code>EEMS</code>
+command-line utility, available at <a href="https://github.com/dipetkov/eems/blob/master/Documentation/EEMS-doc.pdf" class="uri">https://github.com/dipetkov/eems/blob/master/Documentation/EEMS-doc.pdf</a>,
+Petkova writes the following:</p>
+<hr />
+<p>Choosing values for the proposal variances is something of a dark
+art– the goal is to choose the parameters so that proposals are accepted
+about 20% 30% of the time. In practice, it seems to be sufficient to
+choose the variances so that proposals are not accepted too rarely (less
+than 10% of the time) or too often (more than 40% of the time).</p>
+<p>Suppose that we run EEMS (say, with the default values for all
+proposal distributions) and at the end EEMS reports the following
+information about the frequency of accepting proposals of different
+types.</p>
+<pre><code>1 (2050/2593) = 79.06% for type &quot;qTileRate&quot;
+## change the rate of one tile in the diversity tessellation
+2 (1414/2478) = 57.06% for type &quot;qTileMove&quot;
+## move the seed of one tile in the diversity tessellation
+3 (1047/2494) = 41.98% for type &quot;qBirthDeath&quot;
+## add/remove one tile in the diversity tessellation
+4 (20625/47530) = 43.39% for type &quot;mTileRate&quot;
+## change the rate of one tile in the migration tessellation
+5 (15486/50098) = 30.91% for type &quot;mMeanRate&quot;
+## change the overall log10 migration rate
+6 (22352/47532) = 47.03% for type &quot;mTileMove&quot;
+## move the seed of one tile in the migration tessellation
+7 (26305/47275) = 55.64% for type &quot;mBirthDeath&quot;
+## add/remove one tile in the migration tessellation</code></pre>
+<p>It seems that <code>qTileRate</code> and <code>qTileMove</code> are
+accepted too often. So it might be a good idea to increase
+<code>qEffctProposalS2</code> and <code>qSeedsProposalS2</code>. [If the
+proposal variance is higher, then bigger changes/moves will be proposed
+and hence the updates will be accepted less often.]</p>
+<p>Finally, the parameter <code>qVoronoiPr</code> specifies how often to
+propose updating the diversity Voronoi tessellation. Its default value
+is <code>0.05</code>, which means that about <code>5%</code> of the time
+the proposals are about the diversity tessellation and about
+<code>95%</code> of the time the proposals are about the migration
+tessellation.</p>
+<hr />
+</div>
+</div>
+<div id="plotting-the-output-of-an-eems-analysis" class="section level1">
+<h1>Plotting the output of an EEMS analysis</h1>
+<p>The output of the EEMS analysis performed with <code>eems()</code>
+can be plotted using <code>eems.plots()</code>, which produces several
+figures:</p>
+<ul>
+<li><p><code>mrates01</code> is the effective migration surface. This
+contour plot visualizes the estimated effective migration rates <span class="math inline">\(m\)</span>, on the log10 scale after mean
+centering.</p></li>
+<li><p><code>mrates02</code> shows posterior probabilities <span class="math inline">\(P(m &gt; 0 | \texttt{diffs})\)</span> and <span class="math inline">\(P(m &lt; 0 | \texttt{diffs})\)</span> for each
+location in the habitat. Since migration rates are visualized on the
+log10 scale after mean centering, 0 corresponds to the overall mean
+migration rate. This contour plot emphasizes regions with effective
+migration that is significantly higher/lower than the overall
+average.</p></li>
+<li><p><code>qrates01</code> plots the effective diversity surface. This
+contour plot visualizes the estimated effective diversity rates <span class="math inline">\(q\)</span>, on the log10 scale after mean
+centering.</p></li>
+<li><p><code>qrates02</code> shows the posterior probabilities <span class="math inline">\(P(q &gt; 0 | \texttt{diffs})\)</span> and <span class="math inline">\(P(q &lt; 0 | \texttt{diffs})\)</span>. Similar to
+<code>mrates02</code> but applied to the effective diversity
+rates.</p></li>
+<li><p><code>rdist01</code> is a scatter plot of the observed vs the
+fitted between-deme component of genetic dissimilarity, where one point
+represents a pair of sampled demes.</p></li>
+<li><p><code>rdist02</code> is a scatter plot of the observed vs the
+fitted between-deme component of genetic dissimilarity, where one point
+represents a sampled deme.</p></li>
+<li><p><code>rdist03</code> is a scatter plot of observed genetic
+dissimilarities between demes vs observed geographic distances between
+demes.</p></li>
+<li><p><code>pilogl01</code> is the posterior probability trace
+plot.</p></li>
+</ul>
+<p>The <code>mrates</code> and <code>qrates</code> figures visualize
+(properties of) the effective migration and diversity rates across the
+habitat. The other figures can help to check that the MCMC sampler has
+converged (the trace plot <code>pilogl</code>) and that the EEMS model
+fits the data well (the scatter plots of genetic dissimilarities
+<code>rdist</code>).</p>
+<p>The function <code>eems.plots()</code> will work given the results
+from a single EEMS run (one directory in <code>mcmcpath</code>) but it
+is better to run EEMS several times, randomly initializing the MCMC
+chain each time.</p>
+<p>Hence, <code>eems.plots()</code> takes as input a vector of EEMS
+output directories. If the chains have been obtained from a single call
+of <code>eems()</code> with <code>nChains</code> greater than 1, or if
+only a single run is to be plotted, one can use the return value of
+<code>eems()</code>, which is precisely this vector of output
+directories. The other required arguments for <code>eems.plots()</code>
+are <code>plotpath</code>, which is the full path to a file prefix that
+will then be completed by the names of the plots given above, and
+<code>longlat</code>, a logical value that is set <code>TRUE</code> if
+the X coordinate is the longitude and the Y coordinate the latitude, and
+<code>FALSE</code> otherwise.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>eems_results <span class="ot">&lt;-</span> <span class="fu">eems</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  <span class="at">freqs =</span> freqs,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="at">coords =</span> coords,</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">mcmcpath =</span> <span class="st">&quot;/full/path/to/directory/prefix&quot;</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">nChains =</span> <span class="dv">5</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">parallel =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>)   </span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/prefix&quot;</span>,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span></span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>)</span></code></pre></div>
+<p>Various optional parameters add additional plotting functionality,
+which we will illustrate with a series of examples.</p>
+<p>We can add the original sampling locations on top of the contour
+plot.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/with-sampling&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">m.plot.xy =</span> {</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>    <span class="fu">points</span>(coord, <span class="at">col =</span> <span class="st">&quot;purple&quot;</span>)</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  },</span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>  <span class="at">q.plot.xy =</span> {</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a>    <span class="fu">points</span>(coord, <span class="at">col =</span> <span class="st">&quot;purple&quot;</span>)</span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>  }</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>)</span></code></pre></div>
+<p>We can flip the x and y axis, i.e., assume that the x coordinate is
+the latitude and the y coordinate is the longitude.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>  <span class="at">plotpath =</span>  <span class="st">&quot;/full/path/to/file/axes-flipped&quot;</span>,</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">FALSE</span></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>We can also control the output size and format. The code below
+generates all figures as PDF, with the <code>mrates</code> and
+<code>qrates</code> plots of height 12 inches and width 10 inches.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb11-3"><a href="#cb11-3" tabindex="-1"></a>  <span class="at">plotpath =</span>  <span class="st">&quot;/full/path/to/file/output-PDFs&quot;</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" tabindex="-1"></a>  <span class="at">plot.height =</span> <span class="dv">12</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" tabindex="-1"></a>  <span class="at">plot.width =</span> <span class="dv">10</span></span>
+<span id="cb11-7"><a href="#cb11-7" tabindex="-1"></a>)</span></code></pre></div>
+<p>The following code will generate all figures as PNG, with the
+<code>mrates</code> and <code>qrates</code> plots of height 9 inches,
+width 8 inches and resolution 600 dots per inch.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="at">plotpath =</span>  <span class="st">&quot;/full/path/to/file/output-PNGs&quot;</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  <span class="at">plot.height =</span> <span class="dv">9</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>  <span class="at">plot.width =</span> <span class="dv">8</span>,</span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="at">res =</span> <span class="dv">600</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>  <span class="at">out.png =</span> <span class="cn">TRUE</span></span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>We can set various colors and shapes for the outline, the grid and
+the demes.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">plotpath =</span>  <span class="st">&quot;/full/path/to/file/demes-and-edges&quot;</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>  <span class="at">add.grid =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>  <span class="at">col.grid =</span> <span class="st">&quot;gray90&quot;</span>,</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>  <span class="at">lwd.grid =</span> <span class="dv">2</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>  <span class="at">add.outline =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>  <span class="at">col.outline =</span> <span class="st">&quot;blue&quot;</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>  <span class="at">lwd.outline =</span> <span class="dv">5</span>,</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>  <span class="at">add.demes =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>  <span class="at">col.demes =</span> <span class="st">&quot;red&quot;</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  <span class="at">pch.demes =</span> <span class="dv">5</span>,</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>  <span class="at">min.cex.demes =</span> <span class="fl">0.5</span>,</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>  <span class="at">max.cex.demes =</span> <span class="fl">1.5</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a>)</span></code></pre></div>
+<p>If we have the <code>RColorBrewer</code> package, we can also use a
+divergent Red to Blue color scheme instead of the default DarkOrange to
+Blue color scheme.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb14-3"><a href="#cb14-3" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/new-eems-colors&quot;</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" tabindex="-1"></a>  <span class="at">eems.colors =</span> RColorBrewer<span class="sc">::</span><span class="fu">Rbrewer.pal</span>(<span class="dv">11</span>, <span class="st">&quot;RdBu&quot;</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>In a similar vein, we can specify the color scales for the migration
+and diversity rates.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/fix-colscales&quot;</span>,</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>  <span class="at">add.outline =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>  <span class="at">col.outline =</span> <span class="st">&quot;gray&quot;</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  <span class="at">m.colscale =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">3</span>, <span class="dv">3</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a>  <span class="at">q.colscale =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.3</span>, <span class="sc">+</span><span class="fl">0.3</span>)</span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>Often, especially when dealing with larger spatial scales, it is
+helpful to produce contour plots that follow a certain cartographic
+projection, in this case the Mercator projection.</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>projection_none <span class="ot">&lt;-</span> <span class="st">&quot;+proj=longlat +datum=WGS84&quot;</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>projection_mercator <span class="ot">&lt;-</span> <span class="st">&quot;+proj=merc +datum=WGS84&quot;</span></span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/cartographic-projections&quot;</span>,</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a>  <span class="at">projection.in =</span> projection_none,</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="at">projection.out =</span> projection_mercator</span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>)</span></code></pre></div>
+<p>Using the additional packages <code>rworldmap</code> and
+<code>rworldxtra</code>, we can even add a high-resolution geographic
+map as a backdrop to our plots. Setting the corresponding option
+<code>add.map = TRUE</code> requires both those packages, and also
+requires that <code>projection.in</code> is specificed.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/geographic-map&quot;</span>,</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a>  <span class="at">projection.in =</span> projection_none,</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a>  <span class="at">projection.out =</span> projection_mercator,</span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a>  <span class="at">add.map =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a>  <span class="at">col.map =</span> <span class="st">&quot;black&quot;</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>  <span class="at">lwd.map =</span> <span class="dv">5</span></span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>)</span></code></pre></div>
+<p>We can explicitly add a specific map by passing the shape file.</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>map_world <span class="ot">&lt;-</span> rworldmap<span class="sc">::</span><span class="fu">getMap</span>()</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a>map_africa <span class="ot">&lt;-</span> map_world[<span class="fu">which</span>(map_world<span class="sc">@</span>data<span class="sc">$</span>continent <span class="sc">==</span> <span class="st">&quot;Africa&quot;</span>), ]</span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/shapefile&quot;</span>,</span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>  <span class="at">m.plot.xy =</span> {</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a>    <span class="fu">plot</span>(map_africa, <span class="at">col =</span> <span class="cn">NA</span>, <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a>  },</span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a>  <span class="at">q.plot.xy =</span> {</span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a>    <span class="fu">plot</span>(map_africa, <span class="at">col =</span> <span class="cn">NA</span>, <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a>  }</span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>)</span></code></pre></div>
+<p>Combining both, we can apply the Mercator projection and add the map
+of Africa. We must be careful to apply the same projection to the map as
+well.</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>map_africa <span class="ot">&lt;-</span> sp<span class="sc">::</span><span class="fu">spTransform</span>(map_africa,  sp<span class="sc">::</span><span class="fu">CRS</span>(projection_mercator))</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">plotpath =</span>  <span class="st">&quot;/full/path/to/file/shapefile-projected&quot;</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb19-6"><a href="#cb19-6" tabindex="-1"></a>  <span class="at">projection.in =</span> projection_none,</span>
+<span id="cb19-7"><a href="#cb19-7" tabindex="-1"></a>  <span class="at">projection.out =</span> projection_mercator,</span>
+<span id="cb19-8"><a href="#cb19-8" tabindex="-1"></a>  <span class="at">m.plot.xy =</span> {</span>
+<span id="cb19-9"><a href="#cb19-9" tabindex="-1"></a>    <span class="fu">plot</span>(map_africa, <span class="at">col =</span> <span class="cn">NA</span>, <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-10"><a href="#cb19-10" tabindex="-1"></a>  },</span>
+<span id="cb19-11"><a href="#cb19-11" tabindex="-1"></a>  <span class="at">q.plot.xy =</span> {</span>
+<span id="cb19-12"><a href="#cb19-12" tabindex="-1"></a>    <span class="fu">plot</span>(map_africa, <span class="at">col =</span> <span class="cn">NA</span>, <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb19-13"><a href="#cb19-13" tabindex="-1"></a>  }</span>
+<span id="cb19-14"><a href="#cb19-14" tabindex="-1"></a>)</span></code></pre></div>
+<p>Similarly, we can add points, lines, labels, etc. Here is how to add
+a set of colored “labels” on top of the migration/diversity rates and
+the Africa map. Note that we also need to project any points we want to
+plot.</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>coords <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="sc">-</span><span class="dv">10</span>, <span class="dv">10</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="dv">10</span>, <span class="dv">10</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="dv">30</span>, <span class="dv">0</span>,</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>  <span class="dv">40</span>, <span class="sc">-</span><span class="dv">10</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" tabindex="-1"></a>  <span class="dv">30</span>, <span class="sc">-</span><span class="dv">20</span></span>
+<span id="cb20-7"><a href="#cb20-7" tabindex="-1"></a>), <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" tabindex="-1"></a>colors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;red&quot;</span>, <span class="st">&quot;green&quot;</span>, <span class="st">&quot;blue&quot;</span>, <span class="st">&quot;purple&quot;</span>, <span class="st">&quot;orange&quot;</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" tabindex="-1"></a>labels <span class="ot">&lt;-</span> LETTERS[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span>
+<span id="cb20-10"><a href="#cb20-10" tabindex="-1"></a>coords_merc <span class="ot">&lt;-</span> sp<span class="sc">::</span><span class="fu">spTransform</span>(</span>
+<span id="cb20-11"><a href="#cb20-11" tabindex="-1"></a>  sp<span class="sc">::</span><span class="fu">SpatialPoints</span>(coords, sp<span class="sc">::</span><span class="fu">CRS</span>(projection_none)),</span>
+<span id="cb20-12"><a href="#cb20-12" tabindex="-1"></a>  sp<span class="sc">::</span><span class="fu">CRS</span>(projection_mercator)</span>
+<span id="cb20-13"><a href="#cb20-13" tabindex="-1"></a>)</span>
+<span id="cb20-14"><a href="#cb20-14" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" tabindex="-1"></a>coords_merc <span class="ot">&lt;-</span> coords_merc<span class="sc">@</span>coords</span>
+<span id="cb20-16"><a href="#cb20-16" tabindex="-1"></a></span>
+<span id="cb20-17"><a href="#cb20-17" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb20-18"><a href="#cb20-18" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb20-19"><a href="#cb20-19" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/labels-projected&quot;</span>,</span>
+<span id="cb20-20"><a href="#cb20-20" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb20-21"><a href="#cb20-21" tabindex="-1"></a>  <span class="at">projection.in =</span> projection_none,</span>
+<span id="cb20-22"><a href="#cb20-22" tabindex="-1"></a>  <span class="at">projection.out =</span> projection_mercator,</span>
+<span id="cb20-23"><a href="#cb20-23" tabindex="-1"></a>  <span class="at">m.plot.xy =</span> {</span>
+<span id="cb20-24"><a href="#cb20-24" tabindex="-1"></a>    <span class="fu">text</span>(coords_merc, <span class="at">col =</span> colors, <span class="at">pch =</span> labels, <span class="at">font =</span> <span class="dv">2</span>)</span>
+<span id="cb20-25"><a href="#cb20-25" tabindex="-1"></a>  },</span>
+<span id="cb20-26"><a href="#cb20-26" tabindex="-1"></a>  <span class="at">q.plot.xy =</span> {</span>
+<span id="cb20-27"><a href="#cb20-27" tabindex="-1"></a>    <span class="fu">text</span>(coords_merc, <span class="at">col =</span> colors, <span class="at">pch =</span> labels, <span class="at">font =</span> <span class="dv">2</span>)</span>
+<span id="cb20-28"><a href="#cb20-28" tabindex="-1"></a>  }</span>
+<span id="cb20-29"><a href="#cb20-29" tabindex="-1"></a>)</span></code></pre></div>
+<p>Lastly, we can also use <code>eems.plots</code> to compute the
+migration and diversity rates at specific points. They will then be
+saved in an RData file together with the figures.</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a>xy.coords <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a>  <span class="fl">13.70</span>, <span class="fl">3.20</span>,</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a>  <span class="fl">37.10</span>, <span class="sc">-</span><span class="fl">7.20</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a>  <span class="fl">36.10</span>, <span class="sc">-</span><span class="fl">4.10</span>,</span>
+<span id="cb21-5"><a href="#cb21-5" tabindex="-1"></a>  <span class="fl">34.58</span>, <span class="sc">-</span><span class="fl">5.67</span></span>
+<span id="cb21-6"><a href="#cb21-6" tabindex="-1"></a>), <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">byrow =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" tabindex="-1"></a><span class="fu">eems.plots</span>(</span>
+<span id="cb21-8"><a href="#cb21-8" tabindex="-1"></a>  <span class="at">mcmcpath =</span> eems_results,</span>
+<span id="cb21-9"><a href="#cb21-9" tabindex="-1"></a>  <span class="at">plotpath =</span> <span class="st">&quot;/full/path/to/file/default&quot;</span>,</span>
+<span id="cb21-10"><a href="#cb21-10" tabindex="-1"></a>  <span class="at">longlat =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-11"><a href="#cb21-11" tabindex="-1"></a>  <span class="at">xy.coords =</span> xy.coords</span>
+<span id="cb21-12"><a href="#cb21-12" tabindex="-1"></a>)</span>
+<span id="cb21-13"><a href="#cb21-13" tabindex="-1"></a><span class="fu">load</span>(<span class="fu">paste0</span>(<span class="st">&quot;/full/path/to/file/default&quot;</span>, <span class="st">&quot;-rdist.RData&quot;</span>))</span></code></pre></div>
+<p>The RData file contains <code>xym.values</code> and
+<code>xyq.values</code>. <code>xym.values</code> store the migration
+rate for each coordinate, on the log10 scale and after mean-centering.
+Similarly, <code>xyq.values</code> stores the diversity rate for each
+coordinate, on the log10 scale and after mean-centering.</p>
+<p>An overview of all the parameters to <code>eems.plots()</code> can be
+found in its function documentation.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>?eems.plots</span></code></pre></div>
+</div>
+<div id="other-functions" class="section level1">
+<h1>Other functions</h1>
+<p>Besides the two main user-facing functions <code>eems()</code> and
+<code>eems.plots()</code>, which should suffice for the more common use
+cases, this package also provides some additional functions, which we
+will just describe very briefly here. More information about them can be
+found in their respective function documentation.</p>
+<ul>
+<li><p><code>eems.from.files()</code> runs an EEMS analysis from input
+data available as tabular files on disk, and corresponds precisely to
+the original EEMS utility available at <a href="https://github.com/dipetkov/eems" class="uri">https://github.com/dipetkov/eems</a>.</p></li>
+<li><p><code>eems.population.grid()</code> plots the population grid,
+with all edges in the same color, to visualize the grid before
+estimating migration and diversity rates. This is sometimes useful for
+troubleshooting issues with grid connectivity.</p></li>
+<li><p><code>eems.voronoi.samples()</code> and
+<code>eems.posterior.draws()</code> both take random samples from the
+posterior distribution of the migration and diversity rates and plot
+them to visualize the posterior variance (in a slightly different
+way).</p></li>
+<li><p><code>grid.make()</code> constructs a regular triangular grid
+with circa nDemes vertices within a habitat outline. It can also be used
+to make a more complex habitat with holes.</p></li>
+<li><p><code>outer.buffered()</code> computes the boundary polygon of a
+habitat encompassing a set of points, while keeping a specific buffer
+distance from the supplied points. This is used internally by
+<code>eems()</code> to create a default habitat, but can also be used
+directly to make the outer boundary of a more complex habitat.</p></li>
+</ul>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
