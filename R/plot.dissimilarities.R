@@ -1,3 +1,13 @@
+#' Split deme-level dissimilarities into within- and between-deme parts
+#'
+#' @param JtDJ Square matrix of average dissimilarities between (and, on the
+#'   diagonal, within) observed demes.
+#' @param sizes Optional number of samples per deme. Demes with a single sample
+#'   have no within-deme value, so their diagonal entry is replaced by the mean
+#'   over demes with two or more samples.
+#' @returns A list with `W` (diagonal, within-deme values) and `B` (upper triangle of
+#'   `JtDJ[a, b] - (W[a] + W[b]) / 2`, the between-deme values).
+#' @noRd
 JtDJ2BandW <- function(JtDJ, sizes = NULL) {
   # There should be NAs on the main diagonal of JtDobsJ -- these elements correspond to demes with
   # a single observed sample. And since there is a single sample taken, the average dissimilarity
@@ -16,6 +26,15 @@ JtDJ2BandW <- function(JtDJ, sizes = NULL) {
   list(W = W, B = B)
 }
 
+#' Great circle distances between demes
+#'
+#' @param coord Two-column matrix of deme coordinates.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. If `proj.in` is set, the coordinates are first converted to long/lat.
+#' @returns Distances in km, as the upper triangle of the distance matrix
+#'   (same order as `B` from `JtDJ2BandW()`).
+#' @noRd
 geo.distm <- function(coord, longlat, plot.params) {
   if (!longlat) {
     coord <- coord[, c(2, 1)]
@@ -31,6 +50,28 @@ geo.distm <- function(coord, longlat, plot.params) {
   Dist
 }
 
+#' Plot observed against fitted dissimilarities
+#'
+#' Averages `rdistJtDobsJ.txt` and `rdistJtDhatJ.txt` over chains and draws three
+#' scatter plots: between demes, within demes, and observed between-deme
+#' dissimilarity against great circle distance. Errors if any chain lacks one of
+#' the three `rdist*.txt` files. If chains used different population grids, it
+#' plots the grids instead and returns `NULL`. If fewer than two demes have more
+#' than one sample, it draws one scatter plot of the deme-pair dissimilarities
+#' (singletons included) instead and returns `NULL`.
+#'
+#' @param mcmcpath Character vector of EEMS output directories, one per chain.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`.
+#' @param remove.singletons Logical; leave out demes with a single sample.
+#' @param add.abline Logical; add the line y = x.
+#' @param add.r.squared Logical; show the R-squared.
+#' @param highlight Not used yet.
+#' @returns `NULL` in the cases above, or if there are fewer than two observed
+#'   demes; otherwise a list of the data frames behind the three plots:
+#'   `B.component`, `W.component` and `G.component`.
+#' @noRd
 dist.scatterplot <- function(mcmcpath, longlat, plot.params,
                              remove.singletons = TRUE, add.abline = FALSE,
                              add.r.squared = FALSE, highlight = NULL) {

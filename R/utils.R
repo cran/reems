@@ -29,6 +29,18 @@ outer.buffered <- function(coords, d = NULL) {
     
 }
 
+#' Compute the EEMS dissimilarity matrix from genotypes
+#'
+#' Missing genotypes are imputed with the column (site) mean. The result is the
+#' matrix of average squared genotype differences between individuals, which is
+#' what EEMS expects in its `.diffs` input file. A site that is missing in every
+#' individual has no mean, and makes the whole result `NaN`; drop such sites first.
+#'
+#' @param Geno Numeric matrix with one row per individual and one column per SNP,
+#'   coded as 0/1/2 allele counts (or allele frequencies). `NA` marks missing data.
+#' @returns A symmetric `nIndiv` x `nIndiv` matrix of pairwise dissimilarities
+#'   with a zero diagonal.
+#' @noRd
 geno2diffs <- function(Geno) {
   nIndiv <- nrow(Geno)
   nSites <- ncol(Geno)
@@ -49,6 +61,14 @@ geno2diffs <- function(Geno) {
   Diffs
 }
 
+#' Write a matrix in the plain-text format read by the EEMS C++ code
+#'
+#' Values are space-separated, with no header, row names or quoting.
+#'
+#' @param matrix A matrix or data frame to write.
+#' @param filename Path of the file to create (for example `<datapath>.coord`).
+#' @returns Called for its side effect; returns `NULL` invisibly.
+#' @noRd
 write_for_eems <- function(matrix, filename) { 
     write.table(matrix, filename, 
                 col.names = FALSE, row.names = FALSE, quote = FALSE)

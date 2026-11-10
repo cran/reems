@@ -1,5 +1,27 @@
 # This function is mainly for testing purposes and will create on Voronoi diagram
 # for each saved MCMC iteration
+#' Plot the raw Voronoi tessellation from one random posterior draw
+#'
+#' Rates are centred to mean zero (without weighting by tile area), clamped to
+#' the colour scale, and each tile is drawn as a polygon using deldir. Note
+#' that the colour breaks come from `eems.colscale()` on the uncentred rates of
+#' all draws, while the plotted draw is centred.
+#'
+#' Tiles are matched to rates by position, which assumes `deldir()` keeps every
+#' seed (all distinct and inside `dimns$xlim` x `dimns$ylim`). If the draw has a
+#' single tile, it gets the middle colour and is drawn with
+#' `polygon(dimns$xlim, dimns$ylim)`, which is a line rather than the
+#' rectangle, and the grid and demes are not drawn.
+#'
+#' @param mcmcpath An EEMS output directory.
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `eems.colors`, `m./q.colscale`, `m./q.log_scale` and the `*.seeds` settings.
+#' @param post.draws Unused; the caller loops to make several draws.
+#' @param is.mrates Logical; `TRUE` for migration rates (m), `FALSE` for diversity rates (q).
+#' @returns A list with `colors` and `levels` of the colour scale.
+#' @noRd
 voronoi.diagram <- function(mcmcpath, dimns, longlat, plot.params,
                             post.draws = 1, is.mrates = TRUE) {
   message("Plotting Voronoi tessellation of estimated effective rates")

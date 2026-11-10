@@ -1,3 +1,12 @@
+#' Plot the log posterior trace of one or more EEMS chains
+#'
+#' Reads `mcmcpilogl.txt` (pairs of log prior and log likelihood, one pair per
+#' saved iteration) from each chain, and draws their sum as one line per chain,
+#' so convergence can be judged by eye. Draws on the current graphics device.
+#'
+#' @param mcmcpath Character vector of EEMS output directories, one per chain.
+#' @returns Called for its side effect of drawing the plot.
+#' @noRd
 plot.logposterior <- function(mcmcpath) {
   message("Plotting posterior probability trace")
   nchains <- length(mcmcpath)

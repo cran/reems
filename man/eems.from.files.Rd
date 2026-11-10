@@ -54,7 +54,9 @@ eems.from.files(
 \item{diploid}{Logical value that indicates whether the species is diploid (TRUE) or haploid (FALSE). Defaults to TRUE.}
 
 \item{distance}{Distance metric. Either \code{euclidean} or \code{greatcirc}, that is, great circle distance.
-Defaults to 'euclidean'.}
+Defaults to 'euclidean'. 'greatcirc' requires (longitude, latitude) coordinates in degrees,
+and gives an error if any coordinate is out of range, e.g. for projected coordinates.
+Swapped (latitude, longitude) columns cannot always be detected.}
 
 \item{numMCMCIter}{Number of Markov Chain Monte Carlo iterations.}
 

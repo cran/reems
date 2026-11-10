@@ -1,7 +1,21 @@
 # https://github.com/r-spatial/sf/issues/572
+#' Bounding box of an sf geometry as a polygon
+#'
+#' Workaround from <https://github.com/r-spatial/sf/issues/572>.
+#'
+#' @param x An `sf` or `sfc` object.
+#' @returns An `sfc` polygon covering the bounding box of `x`.
+#' @noRd
 st_envelope <- function(x) {
   st_as_sfc(st_bbox(x))
 }
+#' Check whether a linestring is a ring
+#'
+#' A ring is simple and closed, so it can be turned into a polygon.
+#'
+#' @param x An `sfc` linestring.
+#' @returns `TRUE` if [sf::st_polygonize()] produces a non-empty polygon.
+#' @noRd
 st_is_ring <- function(x) {
   boundary <- st_polygonize(x)
   !st_is_empty(boundary)
@@ -11,6 +25,18 @@ st_is_ring <- function(x) {
 # since I don't like how the legend looks.
 # For now, I have only changed how the legend/bar is plotted,
 # the change itself is in the 'myfilled.contour' function
+#' Filled contour plot of a raster
+#'
+#' Copy of [raster::filledContour()] that calls `myfilled.contour()` instead of
+#' [graphics::filled.contour()], so the colour key is drawn without a border.
+#'
+#' @param x A `Raster*` object.
+#' @param y Layer to plot if `x` has several layers.
+#' @param maxpixels Maximum number of cells to sample from `x`.
+#' @param add.key Logical; draw the colour key.
+#' @param ... Further arguments passed to `myfilled.contour()`.
+#' @returns `NULL` invisibly; called for its side effect.
+#' @noRd
 myfilledContour <- function(x, y = 1, maxpixels = 1e+05, add.key = TRUE, ...) {
   if (nlayers(x) > 1) {
     y <- min(max(1, y), nlayers(x))
@@ -29,6 +55,17 @@ myfilledContour <- function(x, y = 1, maxpixels = 1e+05, add.key = TRUE, ...) {
 }
 
 # I have only changed the legend/bar to remove the black border.
+#' Modified version of graphics::filled.contour()
+#'
+#' Same core arguments as [graphics::filled.contour()], except `key.border`
+#' (not supported; it would only reach `title()` through `...`), with these changes: the key
+#' has no border, the plot region fills almost the whole figure, and there are
+#' two extra switches.
+#'
+#' @param add.title Logical; leave room for and draw the main title.
+#' @param add.key Logical; draw the colour key on the right.
+#' @returns `NULL` invisibly; called for its side effect.
+#' @noRd
 myfilled.contour <- function(x = seq(0, 1, length.out = nrow(z)),
                              y = seq(0, 1, length.out = ncol(z)), z,
                              xlim = range(x, finite = TRUE),
@@ -123,6 +160,14 @@ myfilled.contour <- function(x = seq(0, 1, length.out = nrow(z)),
   invisible()
 }
 
+#' Draw a stand-alone colour key in the style of myfilled.contour()
+#'
+#' @param levels Break points of the colour scale.
+#' @param col Colours, one fewer than `levels`.
+#' @param key.axes,key.title Optional expressions to draw the key axis and title.
+#' @param ... Accepted for compatibility with `myfilled.contour()`; unused.
+#' @returns Called for its side effect.
+#' @noRd
 myfilled.legend <-
   function(levels, color.palette = cm.colors,
            col = color.palette(length(levels) - 1), plot.title, plot.axes,
@@ -141,6 +186,22 @@ myfilled.legend <-
     }
   }
 
+#' Highlight selected sampling locations on a surface plot
+#'
+#' Reads the sample-to-deme mapping with `read.graph()` and draws points at the
+#' demes of the individuals in `highlight$index`.
+#'
+#' @param mcmcpath An EEMS output directory (one chain).
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `proj.in`/`proj.out`.
+#' @param highlight `NULL` (draw nothing) or a list with `index` (individual indices)
+#'   and optional `col`, `cex`, `pch`, `lwd` (defaults: red, 1, 4, 2). These are
+#'   indexed in parallel with `index` and are not recycled, so with the scalar
+#'   defaults only the first highlighted sample is drawn. Indices outside
+#'   `seq_along(ipmap)` (the number of samples) are dropped silently.
+#' @returns `NULL` if nothing is drawn; otherwise called for its side effect.
+#' @noRd
 filled.contour.points <- function(mcmcpath, longlat, plot.params, highlight) {
   if (is.null(highlight)) {
     return(NULL)
@@ -181,6 +242,22 @@ filled.contour.points <- function(mcmcpath, longlat, plot.params, highlight) {
   )
 }
 
+#' Interpolate Voronoi tessellations onto the plotting grid
+#'
+#' Calls the C++ routine `tiles2contours()` (or `tiles2contours_standardize()` when
+#' `zero_mean` is `TRUE`) to find, for every saved MCMC draw, the rate of the tile
+#' containing each grid point, and sums them over draws.
+#'
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param tiles Number of Voronoi tiles in each saved draw.
+#' @param rates,xseed,yseed Rates and seed coordinates of all tiles, concatenated over draws.
+#' @param zero_mean Logical; centre each draw's interpolated values on their
+#'   unweighted mean over all points in `marks` (the grid plus `dimns$coord`),
+#'   not on the mean of the tile rates, before summing.
+#' @returns A list with `Zvals` (`nxmrks` x `nymrks` sum of rates), `Zvals_extra`
+#'   (sums at `dimns$coord`), `PrGT0`/`PrLT0` (counts of draws where the rate is
+#'   above/below zero, or `NULL` if `zero_mean` is `FALSE`) and `niters` (number of draws).
+#' @noRd
 transform_rates <- function(dimns, tiles, rates, xseed, yseed, zero_mean) {
   # Bind together the points which make up the raster image
   # and the extra points provided by the user, if any
@@ -228,6 +305,15 @@ transform_rates <- function(dimns, tiles, rates, xseed, yseed, zero_mean) {
   )
 }
 
+#' Read the habitat outline, falling back to its bounding box if invalid
+#'
+#' @param mcmcpath An EEMS output directory (one chain).
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @returns A two-column matrix of outline vertices. If the outline from
+#'   `outer.txt` is not a simple closed ring, a message is shown and the
+#'   rectangle spanning its range is returned instead.
+#' @noRd
 check.habitat.outer.is.valid <- function(mcmcpath, longlat) {
   graph <- read.graph(mcmcpath, longlat)
   outer <- graph$outer
@@ -252,6 +338,18 @@ check.habitat.outer.is.valid <- function(mcmcpath, longlat) {
   outer
 }
 
+#' Add country borders from rworldmap to a surface plot
+#'
+#' Does nothing unless `plot.params$add.map` is `TRUE` and `proj.in` is set.
+#' Uses `rworldmap::getMap(resolution = "high")`, which requires the
+#' 'rworldxtra' package.
+#'
+#' @param mcmcpath An EEMS output directory (one chain). Unused.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading. Unused.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `add.map`, `proj.out`, `col.map` and `lwd.map`.
+#' @returns Called for its side effect.
+#' @noRd
 filled.contour.map <- function(mcmcpath, longlat, plot.params) {
   if (!is.null(plot.params$proj.in) && plot.params$add.map) {
     map <- rworldmap::getMap(resolution = "high")
@@ -260,6 +358,17 @@ filled.contour.map <- function(mcmcpath, longlat, plot.params) {
   }
 }
 
+#' Mask the area outside the habitat and optionally draw its outline
+#'
+#' `myfilledContour()` fills the whole bounding rectangle, so the region between
+#' the rectangle and the habitat is painted white.
+#'
+#' @param mcmcpath An EEMS output directory (one chain).
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `proj.in`, `proj.out`, `add.outline`, `col.outline` and `lwd.outline`.
+#' @returns Called for its side effect.
+#' @noRd
 filled.contour.outline <- function(mcmcpath, longlat, plot.params) {
   outer <- check.habitat.outer.is.valid(mcmcpath, longlat)
   boundary <- st_polygon(list(outer))
@@ -280,6 +389,20 @@ filled.contour.outline <- function(mcmcpath, longlat, plot.params) {
   }
 }
 
+#' Draw the population grid and demes on a surface plot
+#'
+#' Draws the grid edges if `add.grid` is set. Then draws the observed demes,
+#' either all at `min.cex.demes` (`all.demes`) or, with `add.demes`, with point
+#' size scaled between `min.cex.demes` and `max.cex.demes` by the number of
+#' samples. Note that `all.demes` also draws only observed demes
+#' (`graph$alpha`), not every deme in the grid.
+#'
+#' @param mcmcpath An EEMS output directory (one chain).
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`.
+#' @returns Called for its side effect.
+#' @noRd
 filled.contour.graph <- function(mcmcpath, longlat, plot.params) {
   graph <- read.graph(mcmcpath, longlat)
   if (plot.params$add.grid) {
@@ -328,11 +451,25 @@ filled.contour.graph <- function(mcmcpath, longlat, plot.params) {
   }
 }
 
+#' Reproject a raster between two PROJ.4 coordinate systems
+#'
+#' @param surface A `RasterLayer`.
+#' @param proj.in,proj.out PROJ.4 strings for the input and output projections.
+#' @returns The reprojected `RasterLayer`.
+#' @noRd
 project_raster <- function(surface, proj.in, proj.out) {
   raster::projection(surface) <- CRS(proj.in)
   raster::projectRaster(surface, crs = CRS(proj.out))
 }
 
+#' Convert a matrix of grid values into a raster
+#'
+#' @param points An `nxmrks` x `nymrks` matrix of values at the grid points.
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param params Plot settings; if `proj.in` is set the raster is reprojected
+#'   from `proj.in` to `proj.out`.
+#' @returns A `RasterLayer` spanning `dimns$xlim` x `dimns$ylim`.
+#' @noRd
 points_to_raster <- function(points, dimns, params) {
   surface <- raster::raster(t(points),
     xmn = dimns$xlim[1], xmx = dimns$xlim[2],
@@ -345,6 +482,19 @@ points_to_raster <- function(points, dimns, params) {
   surface
 }
 
+#' Plot a flat (all-zero) surface with the habitat decorations
+#'
+#' Used to show the habitat, grid and samples without any estimated rates.
+#'
+#' @param mcmcpath An EEMS output directory or data path, read with `read.dimns()`.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`.
+#' @param plot.xy Optional plotting expression evaluated on top of the surface
+#'   (for example extra points or lines).
+#' @param highlight.samples Optional list passed to `filled.contour.points()`.
+#' @returns A list with `eems.colors` and `eems.levels`.
+#' @noRd
 null.eems.contour <- function(mcmcpath, longlat, plot.params,
                               plot.xy = NULL, highlight.samples = NULL) {
   dimns <- read.dimns(mcmcpath, longlat)
@@ -373,6 +523,20 @@ null.eems.contour <- function(mcmcpath, longlat, plot.params,
   list(eems.colors = eems.colors, eems.levels = eems.levels)
 }
 
+#' Plot one rate surface with its colour key and decorations
+#'
+#' @param mcmcpath An EEMS output directory, used for the outline, grid and samples.
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param Zmean An `nxmrks` x `nymrks` matrix of (log10) rates to plot.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `eems.colors` and `m.colscale` or `q.colscale`.
+#' @param is.mrates Logical; `TRUE` for migration rates (m), `FALSE` for diversity rates (q).
+#' @param plot.xy Optional plotting expression evaluated on top of the surface
+#'   (for example extra points or lines).
+#' @param highlight.samples Optional list passed to `filled.contour.points()`.
+#' @returns A list with `eems.colors` and `eems.levels` (the colour breaks used).
+#' @noRd
 one.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, is.mrates,
                              plot.xy = NULL, highlight.samples = NULL) {
   eems.colors <- plot.params$eems.colors
@@ -405,6 +569,22 @@ one.eems.contour <- function(mcmcpath, dimns, Zmean, longlat, plot.params, is.mr
   list(eems.colors = eems.colors, eems.levels = eems.levels)
 }
 
+#' Plot the posterior probability that rates are above or below the mean
+#'
+#' @param mcmcpath An EEMS output directory, used for the outline, grid and samples.
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param Props An `nxmrks` x `nymrks` matrix of `P(rate > 0) - P(rate < 0)`, in `[-1, 1]`.
+#'   It is rescaled to `P(rate > 0)` in `[0, 1]` before plotting.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `prob.levels` (thresholds above 0.5 that set the colour bins).
+#' @param is.mrates Logical; `TRUE` for migration rates (m), `FALSE` for diversity rates (q).
+#' @param plot.xy Optional plotting expression. When called from
+#'   `average.eems.contours()` it has already been evaluated by
+#'   `one.eems.contour()`, so it has no effect here.
+#' @param highlight.samples Optional list passed to `filled.contour.points()`.
+#' @returns A list with `prob.colors` and `prob.levels`.
+#' @noRd
 one.prob.contour <- function(mcmcpath, dimns, Props, longlat, plot.params, is.mrates,
                              plot.xy = NULL, highlight.samples = NULL) {
   Props <- (Props + 1) / 2
@@ -453,6 +633,19 @@ one.prob.contour <- function(mcmcpath, dimns, Props, longlat, plot.params, is.mr
   list(prob.colors = prob.colors, prob.levels = prob.levels)
 }
 
+#' Plot the surface from one randomly chosen posterior draw
+#'
+#' @param mcmcpath An EEMS output directory; only `mcmcpath[1]` is used.
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`. Uses `m./q.zero_mean` and `m./q.log_scale`.
+#' @param is.mrates Logical; `TRUE` for migration rates (m), `FALSE` for diversity rates (q).
+#' @param plot.xy Optional plotting expression evaluated on top of the surface
+#'   (for example extra points or lines).
+#' @param highlight.samples Optional list passed to `filled.contour.points()`.
+#' @returns The value of `one.eems.contour()`.
+#' @noRd
 random.eems.contour <- function(mcmcpath, dimns, longlat, plot.params, is.mrates,
                                 plot.xy = NULL, highlight.samples = NULL) {
   if (is.mrates) {
@@ -492,6 +685,28 @@ random.eems.contour <- function(mcmcpath, dimns, longlat, plot.params, is.mrates
   )
 }
 
+#' Plot the posterior mean surface, averaged over all chains
+#'
+#' Reads the Voronoi samples (`mcmc[mq]tiles.txt`, `mcmc[mq]rates.txt` and the
+#' seed coordinate files) from every directory in `mcmcpath`, averages the
+#' interpolated rates over all draws, and plots the mean surface. If the rates
+#' are standardised to mean zero, it also plots the posterior probability surface.
+#' Stops unless every directory has all eight Voronoi files (`mcmc{m,q}tiles.txt`,
+#' `mcmc{m,q}rates.txt`, `mcmc{x,y,w,z}coord.txt`), even when plotting only one
+#' of m or q.
+#'
+#' @param mcmcpath Character vector of EEMS output directories, one per chain.
+#' @param dimns Interpolation grid from `read.dimns()`.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param plot.params List of plot settings, already validated by `check.plot.params()`.
+#' @param is.mrates Logical; `TRUE` for migration rates (m), `FALSE` for diversity rates (q).
+#' @param plot.xy Optional plotting expression evaluated on top of the surface
+#'   (for example extra points or lines).
+#' @param highlight.samples Optional list passed to `filled.contour.points()`.
+#' @returns The value of `one.eems.contour()`, plus `xyz.values`: a matrix of
+#'   `dimns$coord` with the posterior mean rate at each point in a third column.
+#' @noRd
 average.eems.contours <- function(mcmcpath, dimns, longlat, plot.params, is.mrates,
                                   plot.xy = NULL, highlight.samples = NULL) {
   if (is.mrates) {

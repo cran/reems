@@ -1,3 +1,16 @@
+#' Draw a matrix as a heatmap in matrix orientation
+#'
+#' Assumes a square matrix (non-square input is silently truncated or errors).
+#' The matrix is drawn turned 180 degrees from how it prints: row 1 at the
+#' bottom and column 1 on the right, so the diagonal runs top-left to
+#' bottom-right. Single-row or single-column input is drawn with element 1 at
+#' the top.
+#'
+#' @param x A matrix (or something coercible to one).
+#' @param col Anchor colours for `mypalette()`; `NULL` uses the default "Reds".
+#' @param colscale Range of values for the colour scale; defaults to the range of `x`.
+#' @returns The palette from `mypalette()` (`colors` and `levels`), for drawing a key.
+#' @noRd
 myheatmap <- function(x, col = NULL, colscale = NULL) {
   if (!is.matrix(x)) x <- as.matrix(x)
   r <- nrow(x)
@@ -17,6 +30,22 @@ myheatmap <- function(x, col = NULL, colscale = NULL) {
   palette
 }
 
+#' Residuals between observed and fitted dissimilarities between individuals
+#'
+#' Reads the observed `<datapath>.diffs`, and for each chain the fitted deme-level
+#' dissimilarities `rdistJtDhatJ.txt` together with `ipmap.txt`, and maps them back
+#' to individuals. Chains are skipped unless they have `rdistJtDobsJ.txt`,
+#' `rdistJtDhatJ.txt` and `rdistoDemes.txt`, although only `rdistJtDhatJ.txt`
+#' (and the unchecked `ipmap.txt`) are read. Note that the sum is still divided
+#' by `length(mcmcpath)`, not by the number of chains used. If every chain is
+#' skipped, the result is the observed dissimilarities with an `NA` diagonal
+#' (an empty `mcmcpath` returns `NULL`).
+#'
+#' @param datapath Path of the EEMS input data, without extension.
+#' @param mcmcpath Character vector of EEMS output directories, one per chain.
+#' @returns An `nIndiv` x `nIndiv` matrix of observed minus fitted dissimilarities,
+#'   with `NA` on the diagonal, or `NULL` if `mcmcpath` is empty.
+#' @noRd
 heatmap.resid <- function(datapath, mcmcpath) {
   mcmcpath <- mcmcpath
   nchains <- length(mcmcpath)
@@ -63,16 +92,16 @@ heatmap.resid <- function(datapath, mcmcpath) {
 #' The function also saves the residual matrix to a file called \code{plotpath-eems-resid.RData}.
 #' In both the residual matrix and the corresponding heat map, individuals are are in the same
 #' order as in the input files \code{datapath.coord} and \code{datapath.diffs}. 
-#' @param datapath The full path and the file name of the input Diffs matrix, which is not copied
-#' by \code{runeems} to the output directory.
+#' @param datapath Path of the EEMS input data without extension; \code{<datapath>.diffs}
+#' is read. The Diffs matrix is not copied by \code{runeems} to the output directory.
 #' @param heatmap.cols The heatmap color palette as a vector of colors, ordered from low to high.
-#' Defaults to the "Reds" divergent palette in the RColorBrewer package.
+#' Defaults to the sequential "Reds" palette in the RColorBrewer package.
 #' @param heatmap.colscale A fixed range for the heatmap colors. The default is NULL, so the color
 #' space is the observed range of the residuals.
 #' @param out.png A logical value which, if set,  forces output graphics to be generated as PNGs
 #' (if `TRUE`) or PDFs (if `FALSE`). Defaults to `TRUE`.
 #' @inheritParams eems.plots
-#' @returns None  
+#' @returns `NULL`, invisibly; called for its side effects (plots and an `.RData` file).
 #' @examples
 #' # Use the provided example or supply the path to your own EEMS run
 #' extdata_path <- system.file("extdata", package = "reems")

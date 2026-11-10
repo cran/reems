@@ -77,6 +77,14 @@ create_habitat_with_holes <- function(outer, holes) {
   SpatialPolygons(list(Polygons(polys, "1")))
 }
 
+#' Check whether a point lies inside a habitat
+#'
+#' @param point Numeric vector of length 2 (x, y).
+#' @param habitat A `SpatialPolygons` habitat, possibly with holes.
+#' @returns `TRUE` if the point is inside the habitat and not inside a hole.
+#'   Points exactly on the outer boundary count as inside; points exactly on a
+#'   hole's boundary count as in the hole (`FALSE`).
+#' @noRd
 point_is_in_habitat <- function(point, habitat) {
   point <- matrix(point, nrow = 1)
   point <- SpatialPoints(point)
@@ -84,22 +92,53 @@ point_is_in_habitat <- function(point, habitat) {
   length(point) == 1
 }
 
+#' New 1-based indices for the demes that are kept
+#'
+#' @param in_habitat Logical vector, one element per deme.
+#' @returns Integer vector with consecutive indices for kept demes and `NA` for dropped ones.
+#' @noRd
 reindex_demes_sequentially <- function(in_habitat) {
   indices_in_habitat <- cumsum(in_habitat)
   indices_in_habitat[!in_habitat] <- NA_integer_
   indices_in_habitat
 }
 
+#' Drop demes that have no new index
+#'
+#' @param demes Data frame or matrix of deme coordinates, one row per deme.
+#' @param new_indices Output of `reindex_demes_sequentially()`.
+#' @returns `demes` without the rows whose new index is `NA`. Subsetting uses
+#'   `drop = TRUE`, so a matrix with a single kept row becomes a vector; a data
+#'   frame (as passed by `remove_demes_outside_habitat()`) keeps its shape.
+#' @noRd
 reindex_demes <- function(demes, new_indices) {
   demes[!is.na(new_indices), ]
 }
 
+#' Renumber edges after demes were dropped
+#'
+#' @param edges Two-column data frame or matrix of 1-based deme indices.
+#' @param new_indices Output of `reindex_demes_sequentially()`.
+#' @returns `edges` with renumbered endpoints. Edges touching a dropped deme are removed.
+#' @noRd
 reindex_edges <- function(edges, new_indices) {
   edges[, 1] <- new_indices[edges[, 1]]
   edges[, 2] <- new_indices[edges[, 2]]
   na.omit(edges)
 }
 
+#' Save a simple picture of a population grid as a PNG
+#'
+#' Writes `<gridpath>.png` (8 x 6 in, 600 dpi) using [grDevices::bitmap()], which
+#' needs Ghostscript. Any devices opened here are closed on exit.
+#'
+#' @param demes Two-column matrix of deme coordinates.
+#' @param edges Two-column matrix of 1-based deme indices.
+#' @param gridpath Output path without the `.png` extension.
+#' @param col.grid,col.demes Colours for edges and demes.
+#' @param ... Further arguments passed to [grDevices::bitmap()].
+#' @returns Called for its side effect.
+#' @noRd
 plot_basic_popgrid <- function(demes, edges, gridpath, col.grid = "green", col.demes = "red", ...) {
   # Ensure graceful exit closing graphics devices.
     initial_ndev <- length(grDevices::dev.list())

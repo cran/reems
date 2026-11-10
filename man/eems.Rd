@@ -19,7 +19,7 @@ eems(
   nWorkers = NULL,
   nDemes = NULL,
   diploid = TRUE,
-  distance = "greatcircle",
+  distance = "greatcirc",
   numMCMCIter = 2e+06,
   numBurnIter = 1e+06,
   numThinIter = 9999,
@@ -75,7 +75,10 @@ Defaults to 6 times the number of individuals, aiming for sufficient resolution.
 \item{diploid}{Logical value that indicates whether the species is diploid (TRUE) or haploid (FALSE). Defaults to TRUE.}
 
 \item{distance}{Distance metric. Either \code{euclidean} or \code{greatcirc}, that is, great circle distance.
-Defaults to 'greatcirc', which is more accurate at larger scales.}
+Defaults to 'greatcirc', which is more accurate at larger scales, and requires
+(longitude, latitude) coordinates in degrees. Gives an error if any coordinate is out of range,
+e.g. for projected coordinates; use 'euclidean' for those.
+Swapped (latitude, longitude) columns cannot always be detected.}
 
 \item{numMCMCIter}{Number of Markov Chain Monte Carlo iterations. Defaults to 2000000.}
 

@@ -15,8 +15,10 @@
 #' @param nSites Number of SNPs used to compute the observed dissimilarity matrix in datapath.diffs.
 #' @param diploid Logical value that indicates whether the species is diploid (TRUE) or haploid (FALSE). Defaults to TRUE.
 #' @param distance Distance metric. Either `euclidean` or `greatcirc`, that is, great circle distance.
-#' Defaults to 'euclidean'.
-#' @param numMCMCIter Number of Markov Chain Monte Carlo iterations. 
+#' Defaults to 'euclidean'. 'greatcirc' requires (longitude, latitude) coordinates in degrees,
+#' and gives an error if any coordinate is out of range, e.g. for projected coordinates.
+#' Swapped (latitude, longitude) columns cannot always be detected.
+#' @param numMCMCIter Number of Markov Chain Monte Carlo iterations.
 #' @param numBurnIter Number of burn-in iterations to be discarded before sampling from posterior. 
 #' @param numThinIter Number of thinning iterations to be discarded between sampling from posterior. 
 #' @param mSeedsProposalS2 Variance of normal proposals to update the seeds of the migration tiles. Defaults to 0.01.
@@ -99,9 +101,51 @@ eems.from.files <- function(
                             sigmaScale = 1.0,
                             negBiProb = 0.67,
                             negBiSize = 10) {
+    if (identical(distance, "greatcirc")) {
+        check.greatcirc.coords(
+            coordinates = read.coord.file(paste0(datapath, ".coord")),
+            outer = read.coord.file(paste0(datapath, ".outer")),
+            demes = if (nzchar(gridpath)) read.coord.file(paste0(gridpath, ".demes"))
+        )
+    }
     testing = FALSE
     p <- as.list(environment())
     cpp_eems(p)
+}
+
+#' Check that coordinates can be (longitude, latitude) in degrees
+#'
+#' Great circle distance reads the first column as longitude and the second as
+#' latitude, in degrees. Projected coordinates, or some swapped columns, fall
+#' outside longitude \[-180, 360\] or latitude \[-90, 90\]. Swapped columns that
+#' are both within 90 cannot be detected.
+#'
+#' @param ... Named two-column matrices, such as `coordinates` and `outer`.
+#'   `NULL` entries are skipped.
+#' @returns `NULL`, invisibly. Stops naming the first input out of range.
+#' @noRd
+check.greatcirc.coords <- function(...) {
+    inputs <- list(...)
+    for (name in names(inputs)) {
+        x <- inputs[[name]]
+        if (is.null(x)) next
+        x <- as.matrix(x)
+        if (any(x[, 1] < -180 | x[, 1] > 360 | x[, 2] < -90 | x[, 2] > 90, na.rm = TRUE)) {
+            stop("distance = \"greatcirc\" needs (longitude, latitude) coordinates in degrees, but some ",
+                 name, " are outside longitude [-180, 360] / latitude [-90, 90]. ",
+                 "Use distance = \"euclidean\" for projected coordinates.", call. = FALSE)
+        }
+    }
+    invisible(NULL)
+}
+
+#' Read a two-column coordinate file in EEMS input format
+#'
+#' @param path Path to a whitespace-separated file with two numbers per line.
+#' @returns A two-column numeric matrix.
+#' @noRd
+read.coord.file <- function(path) {
+    matrix(scan(path, what = numeric(), quiet = TRUE), ncol = 2, byrow = TRUE)
 }
 
 #' Run an EEMS analysis from data in R format
@@ -128,7 +172,10 @@ eems.from.files <- function(
 #' @param nWorkers If `parallel` is TRUE, then the number of workers used is the minimum of `nChains` and `nWorkers`.
 #' Defaults to the number of available cores.
 #' @param distance Distance metric. Either `euclidean` or `greatcirc`, that is, great circle distance.
-#' Defaults to 'greatcirc', which is more accurate at larger scales.
+#' Defaults to 'greatcirc', which is more accurate at larger scales, and requires
+#' (longitude, latitude) coordinates in degrees. Gives an error if any coordinate is out of range,
+#' e.g. for projected coordinates; use 'euclidean' for those.
+#' Swapped (latitude, longitude) columns cannot always be detected.
 #' @param numMCMCIter Number of Markov Chain Monte Carlo iterations. Defaults to 2000000.
 #' @param numBurnIter Number of burn-in iterations to be discarded before sampling from posterior. Defaults to 1000000.
 #' @param numThinIter Number of thinning iterations to be discarded between sampling from posterior. Defaults to 9999.
@@ -174,7 +221,7 @@ eems <- function(
                  nWorkers = NULL,
                  nDemes = NULL,
                  diploid = TRUE,
-                 distance = "greatcircle",
+                 distance = "greatcirc",
                  numMCMCIter = 2000000,
                  numBurnIter = 1000000,
                  numThinIter = 9999,
@@ -193,7 +240,10 @@ eems <- function(
                  negBiProb = 0.67,
                  negBiSize = 10) {
     if (is.null(outer)) {
-        outer <- outer.buffered(coords,buffer) 
+        outer <- outer.buffered(coords,buffer)
+    }
+    if (identical(distance, "greatcirc")) {
+        check.greatcirc.coords(coordinates = coords, outer = outer, demes = demes)
     }
     nIndiv <- nrow(freqs)
     nSites <- ncol(freqs)

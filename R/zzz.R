@@ -1,3 +1,9 @@
+#' Startup message
+#'
+#' Credits the original EEMS plotting code and the colour scheme.
+#'
+#' @param libname,pkgname Standard [base::.onAttach()] arguments.
+#' @noRd
 .onAttach <- function(libname, pkgname) {
   packageStartupMessage(
     "reems is an R wrapper for the EEMS spatial population genetics method.\n",

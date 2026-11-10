@@ -1,3 +1,18 @@
+#' Validate plot settings and fill in defaults
+#'
+#' Each setting that is missing or of the wrong type is replaced by its default.
+#' Scalar settings are cut to their first element, except colour settings, which
+#' must be a single colour: a vector of colours makes `if (is.color(...))` fail.
+#' `m.colscale`/`q.colscale` are replaced by their range, `eems.colors` is kept
+#' whole (or reset to the default if any entry is invalid), and `prob.levels` is
+#' restricted to `[0, 1]` with 0 and 1 added. If `add.map` is `TRUE`, loads
+#' (without attaching) rworldmap and rworldxtra, stopping if either is not
+#' installed. Stops if a map or `proj.out` is requested without
+#' `proj.in`.
+#'
+#' @param params Named list of user plot settings (the `...` of [eems.plots()]).
+#' @returns The completed list of settings.
+#' @noRd
 check.plot.params <- function(params) {
   ## Is there a way to check if a string is a valid PROJ.4 string?
   if (is.character(params$proj.in)) {
@@ -190,6 +205,14 @@ check.plot.params <- function(params) {
   params
 }
 
+#' Axis labels and titles for the dissimilarity scatter plots
+#'
+#' @returns A list with elements `JtDJ`, `Between`, `Within` and `GeoDist`, each a list
+#'   of `xlab`, `ylab` and titles (`mainTRUE`/`subTRUE` when singleton demes are
+#'   removed, `mainFALSE`/`subFALSE` otherwise). Not every entry has all four:
+#'   `JtDJ` has only `mainTRUE`, and `Within` has no `subFALSE`; a missing title
+#'   is drawn as nothing.
+#' @noRd
 sub.axes.labels <- function() {
   JtDJ <- list(
     xlab = expression(paste("Fitted dissimilarity between individuals  ", Delta[i * j])),
@@ -232,6 +255,13 @@ sub.axes.labels <- function() {
 }
 
 # dist.type takes the values: "JtDJ", "Between", "Within", "GeoDist"
+#' Add axis labels and titles to a dissimilarity scatter plot
+#'
+#' @param dist.type One of `"JtDJ"`, `"Between"`, `"Within"` or `"GeoDist"`.
+#' @param remove.singletons Logical; choose the titles for plots without singleton demes.
+#' @param subtitle Optional subtitle that replaces the default one.
+#' @returns Called for its side effect.
+#' @noRd
 dist.axes.labels <- function(dist.type, remove.singletons = TRUE, subtitle = NULL) {
   labels <- sub.axes.labels()[[dist.type]]
   title(xlab = labels$xlab)
@@ -253,10 +283,29 @@ dist.axes.labels <- function(dist.type, remove.singletons = TRUE, subtitle = NUL
   }
 }
 
+#' Point colours for deme pairs
+#'
+#' @param sizes Number of samples in the smaller deme of each pair.
+#' @returns `"black"` for pairs where both demes have two or more samples, `"gray60"` otherwise.
+#' @noRd
 sub.scattercols <- function(sizes) {
   c("black", "gray60")[1 + (sizes < 2)]
 }
 
+#' Scatter plot of observed against fitted dissimilarities
+#'
+#' @param dist.type Type of plot, passed to `dist.axes.labels()`.
+#' @param dist.data Data frame with `fitted` and `obsrvd` columns and optional
+#'   `size`, `pch`, `cex` and `col` columns. Points are drawn most-common colour
+#'   first, so rarer colours end up on top.
+#' @param remove.singletons Logical; drop rows with `size < 2`. Requires a `size`
+#'   column: without one, every row is dropped.
+#' @param add.abline Logical; add the line y = x.
+#' @param add.r.squared Logical; show the R-squared of `obsrvd ~ fitted`.
+#' @param subtitle Optional subtitle.
+#' @param add Logical; add points to the current plot instead of starting a new one.
+#' @returns Called for its side effect.
+#' @noRd
 sub.scatterplot <- function(dist.type, dist.data, remove.singletons, add.abline, add.r.squared,
                             subtitle = NULL, add = FALSE) {
   if (remove.singletons) {
@@ -297,12 +346,20 @@ sub.scatterplot <- function(dist.type, dist.data, remove.singletons, add.abline,
 
 # The distance metric used by EEMS
 # Euclidean distance by default; great circle (haversine) distance as an alternative
+#' Read the distance metric used by an EEMS run
+#'
+#' Reads the `distance = ...` line in `eemsrun.txt`, ignoring whitespace and case.
+#'
+#' @param mcmcpath An EEMS output directory.
+#' @returns `"euclidean"` or `"greatcirc"`, as recorded in `eemsrun.txt`, or
+#'   `"euclidean"` if there is no such line. Stops for any other value.
+#' @noRd
 which.dist.metric <- function(mcmcpath) {
   dist.metric <- "euclidean"
   Lines <- readLines(file.path(mcmcpath, "eemsrun.txt"))
   for (i in seq(Lines)) {
     s <- gsub("\\s", "", Lines[i]) # Remove any empty space
-    x <- strsplit(s, "distance = ")[[1]] # Is there a line 'distance = xxx'?
+    x <- strsplit(s, "distance=")[[1]] # Is there a line 'distance = xxx'?
     if (length(x) == 2) dist.metric <- tolower(x[2]) # What is the distance metric?
   }
   if ((dist.metric == "euclidean") || (dist.metric == "greatcirc")) {
@@ -316,6 +373,25 @@ which.dist.metric <- function(mcmcpath) {
   dist.metric
 }
 
+#' Build the interpolation grid for plotting surfaces
+#'
+#' Reads the habitat outline from `<path>/outer.txt` (EEMS output) or, failing
+#' that, `<path>.outer` (EEMS input), closes it if needed, and lays a regular grid
+#' over its bounding box. The grid has 100 points along the shorter side, scaled
+#' by the aspect ratio (with a cos(latitude) correction, applied even to
+#' projected coordinates) for the other side.
+#'
+#' @param path An EEMS output directory or an input data path (without extension).
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @param nxmrks,nymrks Optional grid size; both must be given to override the default.
+#' @param coord Optional two-column matrix of extra points at which to report rates.
+#'   Defaults to the grid points.
+#' @returns A list with the grid (`xmrks`, `ymrks`, `marks`, `nxmrks`, `nymrks`, `nmrks`),
+#'   the bounding box (`xlim`, `ylim`, `xspan`, `yspan`, `aspect`), the closed
+#'   `outer` outline, `coord`, and `dist.metric` (from `which.dist.metric()` for
+#'   output directories, `"euclidean"` for input data).
+#' @noRd
 read.dimns <- function(path, longlat, nxmrks = NULL, nymrks = NULL, coord = NULL) {
   eems.output <- NULL
   datapath.outer <- paste0(path, ".outer")
@@ -382,6 +458,15 @@ read.dimns <- function(path, longlat, nxmrks = NULL, nymrks = NULL, coord = NULL
   )
 }
 
+#' Read the population grid edges
+#'
+#' Reads `edges.txt`, converting the old six-neighbours-per-deme format to the
+#' current one-edge-per-row format if needed. Converted edges appear twice, once
+#' in each direction.
+#'
+#' @param mcmcpath An EEMS output directory.
+#' @returns A two-column matrix of 1-based deme indices, one row per edge.
+#' @noRd
 read.edges <- function(mcmcpath) {
   edges <- read.table(file.path(mcmcpath, "edges.txt"), colClasses = numeric())
   edges <- as.matrix(edges)
@@ -411,6 +496,19 @@ read.edges <- function(mcmcpath) {
   edges
 }
 
+#' Read the population graph and sample assignment
+#'
+#' For an EEMS output directory, reads `demes.txt`, `ipmap.txt`, `outer.txt` and
+#' `read.edges()`. For input data (`<path>.coord`, `.diffs`, `.outer`), each
+#' distinct sampling location is treated as a deme and there are no edges.
+#'
+#' @param path An EEMS output directory or an input data path (without extension).
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading.
+#' @returns A list with `ipmap` (deme of each sample), `demes` (deme coordinates),
+#'   `edges` (or `NULL`), `alpha` (indices of observed demes), `sizes` (samples per
+#'   observed deme) and `outer` (habitat outline).
+#' @noRd
 read.graph <- function(path, longlat) {
   eems.output <- NULL
   if (
@@ -467,6 +565,17 @@ read.graph <- function(path, longlat) {
   list(ipmap = ipmap, demes = demes, edges = edges, alpha = alpha, sizes = sizes, outer = outer)
 }
 
+#' Read the saved Voronoi tessellations for m or q rates
+#'
+#' @param mcmcpath An EEMS output directory.
+#' @param longlat Logical; `TRUE` if coordinates are (longitude, latitude), `FALSE` if
+#'   (latitude, longitude), in which case columns are swapped on reading. Here the seed x/y vectors are swapped.
+#' @param is.mrates Logical; `TRUE` for migration rates (m), `FALSE` for diversity rates (q). m reads `mcmcmtiles.txt`, `mcmcmrates.txt`, `mcmcxcoord.txt` and `mcmcycoord.txt`;
+#'   q reads `mcmcqtiles.txt`, `mcmcqrates.txt`, `mcmcwcoord.txt` and `mcmczcoord.txt`.
+#' @param log_scale Logical; return `log10(rates)`.
+#' @returns A list with `tiles` (number of tiles per draw) and `rates`, `xseed` and
+#'   `yseed` (one entry per tile, concatenated over draws).
+#' @noRd
 read.voronoi <- function(mcmcpath, longlat, is.mrates, log_scale) {
   if (is.mrates) {
     rates <- scan(file.path(mcmcpath, "mcmcmrates.txt"),

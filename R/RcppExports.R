@@ -2,18 +2,18 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 cpp_eems <- function(p) {
-    invisible(.Call('_reems_cpp_eems', PACKAGE = 'reems', p))
+    invisible(.Call(`_reems_cpp_eems`, p))
 }
 
 cpp_write_grid <- function(datapath, mcmcpath, nDemes) {
-    invisible(.Call('_reems_cpp_write_grid', PACKAGE = 'reems', datapath, mcmcpath, nDemes))
+    invisible(.Call(`_reems_cpp_write_grid`, datapath, mcmcpath, nDemes))
 }
 
 tiles2contours_standardize <- function(tiles, rates, seeds, marks, distm) {
-    .Call('_reems_tiles2contours_standardize', PACKAGE = 'reems', tiles, rates, seeds, marks, distm)
+    .Call(`_reems_tiles2contours_standardize`, tiles, rates, seeds, marks, distm)
 }
 
 tiles2contours <- function(tiles, rates, seeds, marks, distm) {
-    .Call('_reems_tiles2contours', PACKAGE = 'reems', tiles, rates, seeds, marks, distm)
+    .Call(`_reems_tiles2contours`, tiles, rates, seeds, marks, distm)
 }
 

@@ -76,7 +76,7 @@ void Params::check_input_arguments() {
   check_condition(negBiSize > 0, "Check that negBiSize > 0");
   check_condition(negBiProb > 0.0 && negBiProb < 1.0,
 		  "Check that negBiProb in (0,1)");
-  check_condition(dist_metric.compare("euclidean") || dist_metric.compare("greatcirc"),
+  check_condition(!dist_metric.compare("euclidean") || !dist_metric.compare("greatcirc"),
 		  "Check that 'distance' is either 'euclidean' or 'greatcirc'");
   /////////////////////////////////////////////////////
   mrateShape_2 /= 2.0;
@@ -447,6 +447,6 @@ MatrixXd slice(const MatrixXd &A, const VectorXi &R, const VectorXi &C) {
 }
 void check_condition(const bool condition, const string &message) {
   if (condition == false) {
-    Rcpp::stop("Error: %s", message.c_str());
+    Rcpp::stop("%s", message.c_str());
   }
 }

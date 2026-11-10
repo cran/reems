@@ -64,11 +64,14 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP run_testthat_tests(SEXP);
+
 static const R_CallMethodDef CallEntries[] = {
     {"_reems_cpp_eems", (DL_FUNC) &_reems_cpp_eems, 1},
     {"_reems_cpp_write_grid", (DL_FUNC) &_reems_cpp_write_grid, 3},
     {"_reems_tiles2contours_standardize", (DL_FUNC) &_reems_tiles2contours_standardize, 5},
     {"_reems_tiles2contours", (DL_FUNC) &_reems_tiles2contours, 5},
+    {"run_testthat_tests", (DL_FUNC) &run_testthat_tests, 1},
     {NULL, NULL, 0}
 };
 

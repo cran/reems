@@ -14,9 +14,13 @@ import(graphics)
 import(raster)
 import(sf)
 import(sp)
-importFrom(stats,lm)
-importFrom(stats,na.omit)
-importFrom(utils,capture.output)
-importFrom(utils,read.table)
-importFrom(utils,write.table)
-useDynLib(reems)
+importFrom(stats,
+  lm,
+  na.omit
+)
+importFrom(utils,
+  capture.output,
+  read.table,
+  write.table
+)
+useDynLib(reems, .registration = TRUE)
